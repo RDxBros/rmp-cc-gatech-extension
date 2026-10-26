@@ -1,0 +1,80 @@
+/* Banner renders this results grid as a table with table-layout: fixed,
+   which locks every column's width (set on the header row) regardless of
+   what width/min-width is set on a body cell. Switching the table itself to
+   auto layout lets the browser recompute column widths from actual content,
+   so the Instructor column can actually grow to fit the badge instead of
+   just wrapping text inside a column that never resizes.
+   :has() is supported in Chrome 105+ (this extension is Chrome-only). */
+table:has(td[data-property="instructor"]) {
+    table-layout: auto !important;
+}
+
+/* Banner also sets a narrow inline width (and nowrap/ellipsis) directly on
+   the Instructor cells; override those too so the column's actual content
+   width (now that auto layout respects it) isn't re-capped by this cell.
+   !important is needed since Banner re-applies its own inline width/style
+   attributes on this element. */
+td[data-property="instructor"] {
+    width: auto !important;
+    min-width: 180px !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    vertical-align: top !important;
+}
+
+/* Boxed container separating the injected rating badge from Banner's own
+   cell content (the professor's name/email link) above it. */
+.rmp-rating-box {
+    border: 1px solid #d8d5cc;
+    border-radius: 6px;
+    background: #fbfaf8;
+    padding: 6px 7px;
+}
+
+/* Small inline icon preceding a stat line. */
+.rmp-icon {
+    display: inline-flex;
+    vertical-align: -1px;
+    margin-right: 4px;
+}
+
+.rmp-icon svg {
+    display: block;
+}
+
+/* Headline RMP overall-rating stat: bold and color-coded by quality. */
+.rmp-rating-overall {
+    font-weight: bold;
+    font-size: 1.1em;
+    padding: 1px 6px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.rmp-rating-good {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.rmp-rating-mid {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.rmp-rating-bad {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Secondary stats (Difficulty, Total Ratings, Take again). */
+.rmp-secondary {
+    color: #000;
+}
+
+/* "No ratings yet." / "No page found." states: muted so they read as
+   categorically different from a real (possibly low) rating. */
+.rmp-no-data {
+    color: #6c757d;
+    font-style: italic;
+}

@@ -12,10 +12,10 @@ URL = "https://www.ratemyprofessors.com/graphql";
 AUTH_TOKEN = "dGVzdDp0ZXN0";
 
 /**
- * Base64 encoded school ID for the University of Georgia.
+ * Base64 encoded school ID for Georgia Institute of Technology.
  * @type {string}
  */
-SCHOOL_ID = "U2Nob29sLTExMDE=";
+SCHOOL_ID = "U2Nob29sLTM2MQ==";
 
 /**
  * Fetches professor data from the RMP GraphQL API and returns the ID of the first match.

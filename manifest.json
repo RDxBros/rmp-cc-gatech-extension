@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Rate My Professor for UGA",
+  "name": "Rate My Professor for Georgia Tech",
   "version": "1.1",
-  "description": "Displays Rate My Professor ratings on the Athena registration page.",
+  "description": "Displays Rate My Professor ratings directly on Georgia Tech's registration page.",
   "host_permissions": [
     "https://www.ratemyprofessors.com/*"
   ],
@@ -14,8 +14,9 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://athena-prod.uga.edu/StudentRegistrationSsb/*"],
-      "js": ["content.js"]
+      "matches": ["https://registration.banner.gatech.edu/StudentRegistrationSsb/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"]
     }
   ],
   "background": {
