@@ -20,7 +20,7 @@
 
 ## Installation
 ### Chrome Web Store
-Coming soon (pending Chrome Web Store review).
+Download now at https://chromewebstore.google.com/detail/rate-my-professor-for-geo/ijbgdjbenljnebehiaanbmbpdidapldl
 
 ### Manual Installation (For Development)
 1. Clone this repository: `git clone https://github.com/RDxBros/rmp-cc-gatech-extension.git`
