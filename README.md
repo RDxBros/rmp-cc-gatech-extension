@@ -1,6 +1,10 @@
-# Rate My Professor for Georgia Tech
+# Stats for bees (iykyk)
 
 **Description:** This Chrome extension integrates Rate My Professors (RMP) data directly into Georgia Tech's registration pages, so professor insights and metrics show up right where you're searching for classes.
+
+## Installation
+### Chrome Web Store
+Download now at https://chromewebstore.google.com/detail/rate-my-professor-for-geo/ijbgdjbenljnebehiaanbmbpdidapldl
 
 ## Preview
 ![Extension Demo](./assets/demo.png)<br>
@@ -17,10 +21,6 @@
     * Percentage who'd take the professor again
 * Clickable links to full Rate My Professors profiles
 * Clear fallback states for professors without an RMP page, or with a page but no ratings yet
-
-## Installation
-### Chrome Web Store
-Download now at https://chromewebstore.google.com/detail/rate-my-professor-for-geo/ijbgdjbenljnebehiaanbmbpdidapldl
 
 ### Manual Installation (For Development)
 1. Clone this repository: `git clone https://github.com/RDxBros/rmp-cc-gatech-extension.git`
