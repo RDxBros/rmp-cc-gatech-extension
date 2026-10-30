@@ -30,6 +30,13 @@ td[data-property="instructor"] {
     border-radius: 6px;
     background: #fbfaf8;
     padding: 6px 7px;
+    margin-top: 6px;
+    box-shadow: 0 1px 2px rgba(20, 20, 15, 0.05);
+    transition: box-shadow 0.15s ease;
+}
+
+.rmp-rating-box:hover {
+    box-shadow: 0 2px 6px rgba(20, 20, 15, 0.1);
 }
 
 /* Small inline icon preceding a stat line. */
@@ -43,13 +50,16 @@ td[data-property="instructor"] {
     display: block;
 }
 
-/* Headline RMP overall-rating stat: bold and color-coded by quality. */
+/* Headline RMP overall-rating stat: bold and color-coded by quality. The inset border gives
+   the chip a touch of definition against its own background tint, instead of a flat fill. */
 .rmp-rating-overall {
     font-weight: bold;
     font-size: 1.1em;
     padding: 1px 6px;
     border-radius: 4px;
     display: inline-block;
+    box-shadow: inset 0 0 0 1px rgba(20, 20, 15, 0.06);
+    transition: box-shadow 0.15s ease;
 }
 
 .rmp-rating-good {
@@ -78,3 +88,218 @@ td[data-property="instructor"] {
     color: #6c757d;
     font-style: italic;
 }
+
+/* Course Critique GPA chip: same visual language (color-coded, bold) as the RMP overall
+   rating chip, so both headline stats read the same way at a glance. */
+.cc-gpa-chip {
+    font-weight: bold;
+    font-size: 1.02em;
+    padding: 1px 7px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: inset 0 0 0 1px rgba(20, 20, 15, 0.06);
+    transition: box-shadow 0.15s ease, transform 0.1s ease;
+    /* "help" cursor (a question-mark cursor in most browsers) signals there's more info on
+       hover, since the chip gives no other visual cue that it's interactive. */
+    cursor: help;
+}
+
+.cc-gpa-chip:hover {
+    box-shadow: inset 0 0 0 1.5px rgba(20, 20, 15, 0.16);
+}
+
+.cc-gpa-chip:active {
+    transform: scale(0.96);
+}
+
+.cc-info-icon {
+    display: inline-flex;
+    margin-left: 3px;
+    opacity: 0.75;
+}
+
+.cc-info-icon svg {
+    display: block;
+}
+
+.cc-gpa-good {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.cc-gpa-mid {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.cc-gpa-bad {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Block holding the course-wide GPA chip + link, appended into a course's Title cell. */
+.cc-course-block {
+    margin-top: 6px;
+}
+
+/* Separates an instructor's Course Critique GPA from their RMP stats within the same box, and
+   separates each instructor's section in a co-taught section's shared box. */
+.cc-divider {
+    height: 1px;
+    background: #e3e0d8;
+    margin: 7px 0;
+}
+
+/* Instructor name heading inside a co-taught section's shared box (createMultiInstructorBox). */
+.rmp-coinstructor-name {
+    font-weight: 700;
+    font-size: 11px;
+    color: #3a3933;
+    margin-bottom: 3px;
+}
+
+/* Pill-shaped link out to an external site (RMP, Course Critique). Deliberately NOT styled
+   like a plain inline text link (no underline, has its own background/border) - sitting right
+   under Banner's own underlined course-title/instructor-email links, a plain link here was
+   nearly indistinguishable from them. */
+.ext-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 5px;
+    margin-right: 6px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    padding: 2px 8px 2px 7px;
+    border-radius: 999px;
+    /* An inset box-shadow stands in for the border on purpose. `border-color` is one of the few
+       properties a browser lets `:visited` (and some sites' own a:focus resets) render
+       differently, which is exactly what was making this disappear specifically after a click:
+       Banner's own site-wide link styling resets it on visited/focused links. box-shadow isn't
+       subject to either restriction, so it stays visible regardless of click/focus/visited
+       state. */
+    box-shadow: inset 0 0 0 1px transparent;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.ext-link:hover {
+    text-decoration: none;
+}
+
+.ext-link:active {
+    transform: scale(0.94);
+}
+
+.ext-link-icon {
+    display: inline-flex;
+}
+
+.ext-link-icon svg {
+    display: block;
+}
+
+/* White (not filled) background: a solid green pill here reads as the same kind of element as
+   the GPA/rating chips above it, which are ALSO sometimes green (a high GPA/rating) - visually
+   it looked like two colored boxes competing rather than a stat chip + a link under it. Keeping
+   the background white and the color/box-shadow as the only accent keeps it clearly a link,
+   distinct from the chips, in any color state those chips might be in. */
+.ext-link-rmp,
+.ext-link-cc {
+    color: #2e7d5b;
+    background: #ffffff;
+    box-shadow: inset 0 0 0 1px #8fc2a8;
+}
+
+.ext-link-rmp:hover,
+.ext-link-cc:hover {
+    background: #eeede8;
+}
+
+/* Grade-distribution hover tooltip. Fixed-position and appended to <body> (not nested in the
+   table cell) so it can't be clipped by the results table's own overflow styling, and
+   positioned/flipped in JS so it never overlaps a neighboring row. */
+.cc-tooltip {
+    position: fixed;
+    z-index: 2147483647;
+    box-sizing: border-box;
+    width: 210px;
+    max-width: calc(100vw - 16px);
+    background: #232220;
+    color: #f3f2ee;
+    border-radius: 8px;
+    padding: 11px 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+    font-size: 11px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    /* Lets the mouse pass through to whatever's underneath, so the tooltip itself can never
+       "steal" hover and interfere with the chip's own mouseenter/mouseleave. */
+    pointer-events: none;
+    /* visibility (not display) keeps its layout geometry measurable while hidden, which the
+       positioning logic in showCcTooltip relies on. */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(4px) scale(0.98);
+    transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s;
+}
+
+.cc-tooltip.cc-tooltip-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.cc-tooltip-title {
+    font-weight: bold;
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.cc-tooltip-bars {
+    display: flex;
+    gap: 4px;
+    align-items: flex-end;
+    margin-bottom: 6px;
+}
+
+.cc-tooltip-bar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+}
+
+.cc-tooltip-bar-pct {
+    font-size: 9.5px;
+    color: #cfcdc6;
+}
+
+.cc-tooltip-bar {
+    width: 100%;
+    border-radius: 2px 2px 0 0;
+}
+
+.cc-tooltip-bar-key {
+    font-size: 10px;
+    font-weight: bold;
+    color: #cfcdc6;
+}
+
+.cc-tooltip-footer {
+    display: flex;
+    justify-content: space-between;
+    color: #aaa89f;
+    font-size: 10.5px;
+    border-top: 1px solid #3a3933;
+    padding-top: 6px;
+}
+
+.cc-tooltip-footer span strong {
+    color: #d6d4cb;
+}
+

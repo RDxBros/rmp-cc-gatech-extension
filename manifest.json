@@ -1,10 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Stats for bees",
-  "version": "1.1",
-  "description": "Displays Rate My Professor ratings directly on Georgia Tech's registration page.",
+  "version": "1.1.1",
+  "description": "Displays Rate My Professor ratings and Course Critique data directly on Georgia Tech's registration page.",
   "host_permissions": [
-    "https://www.ratemyprofessors.com/*"
+    "https://www.ratemyprofessors.com/*",
+    "https://c4citk6s9k.execute-api.us-east-1.amazonaws.com/*"
   ],
   "icons": {
     "16": "assets/icon16.png",

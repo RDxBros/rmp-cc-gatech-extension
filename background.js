@@ -225,8 +225,174 @@ async function getProfessorMetricsWithLink(professorID) {
 }
 
 /**
+ * Base URL for Georgia Tech Course Critique's backing data API.
+ * @type {string}
+ */
+COURSE_CRITIQUE_API = "https://c4citk6s9k.execute-api.us-east-1.amazonaws.com/prod/data/course";
+
+/**
+ * Estimates a section's headcount from Course Critique's bucketed class-size-group label,
+ * so per-section GPA/grade data can be combined into a weighted average instead of a plain
+ * mean (a 200-student lecture section should count for more than a 10-student seminar).
+ * Matches the weighting Course Critique's own site uses (via the gt-scheduler project, which
+ * reverse-engineered it from this same API).
+ *
+ * @param {string} classSizeGroup - e.g. "Very Large (50 students or more)".
+ * @return {number} An estimated section headcount.
+ */
+function sizeGroupWeight(classSizeGroup) {
+    if (!classSizeGroup) {
+        return 20;
+    }
+    if (classSizeGroup.includes("Very Small")) {
+        return 5;
+    }
+    if (classSizeGroup.includes("Very Large")) {
+        return 50;
+    }
+    if (classSizeGroup.includes("Small")) {
+        return 15;
+    }
+    if (classSizeGroup.includes("Large")) {
+        return 40;
+    }
+    if (classSizeGroup.includes("Mid")) {
+        return 25;
+    }
+    return 20;
+}
+
+/**
+ * Normalizes a Course Critique instructor name from "Lastname, Firstname" to
+ * "Firstname Lastname", so it can be matched against the name already normalized from the
+ * registration page's instructor cell.
+ *
+ * @param {string} name - e.g. "Stewart, Lauren".
+ * @return {string} e.g. "Lauren Stewart", or the original name if it isn't in "Last, First" form.
+ */
+function normalizeCritiqueInstructorName(name) {
+    const match = name.match(/^([\w'-]+(?:\s+[\w'-]+)*),\s*([\w'-]+)/);
+    if (match) {
+        const [, lastName, firstName] = match;
+        return `${firstName} ${lastName}`;
+    }
+    return name;
+}
+
+/**
+ * Aggregates an array of Course Critique's per-section rows into a single weighted-average
+ * GPA and grade distribution.
+ *
+ * @param {Array<Object>} rows - Rows from the API's `raw` array (optionally filtered to one instructor).
+ * @return {Object|null} `{avgGpa, dist: {A,B,C,D,F,W}, passRate, withdrawRate, sectionsCount}`,
+ *                        or `null` if none of the rows had usable GPA data.
+ */
+function aggregateCritiqueRows(rows) {
+    let gpaWeightSum = 0;
+    let gpaNumerSum = 0;
+    let distWeightSum = 0;
+    const distNumer = {A: 0, B: 0, C: 0, D: 0, F: 0, W: 0};
+
+    for (const row of rows) {
+        const weight = sizeGroupWeight(row.class_size_group);
+
+        if (typeof row.GPA === 'number') {
+            gpaNumerSum += row.GPA * weight;
+            gpaWeightSum += weight;
+        }
+
+        for (const key of Object.keys(distNumer)) {
+            if (typeof row[key] === 'number') {
+                distNumer[key] += row[key] * weight;
+            }
+        }
+        distWeightSum += weight;
+    }
+
+    if (gpaWeightSum === 0) {
+        return null;
+    }
+
+    const dist = {};
+    for (const key of Object.keys(distNumer)) {
+        dist[key] = distWeightSum > 0 ? Math.round((distNumer[key] / distWeightSum) * 10) / 10 : 0;
+    }
+
+    return {
+        avgGpa: Math.round((gpaNumerSum / gpaWeightSum) * 100) / 100,
+        dist,
+        passRate: Math.max(0, Math.round((100 - dist.F - dist.W) * 10) / 10),
+        withdrawRate: dist.W,
+        sectionsCount: rows.length
+    };
+}
+
+/**
+ * Fetches and aggregates Course Critique data for a course, both overall and broken down
+ * per instructor.
+ *
+ * @param {string} courseID - e.g. "PHYS 2212" (subject code + course number, space-separated).
+ * @return {Promise<Object|null>} `{avgGpa, dist, passRate, withdrawRate, sectionsCount,
+ *                                  byInstructor: {[name]: {avgGpa, dist, passRate, withdrawRate}},
+ *                                  critiqueLink}`, or `null` if no data was found.
+ */
+async function getCourseCritiqueData(courseID) {
+    try {
+        const response = await fetch(`${COURSE_CRITIQUE_API}?courseID=${encodeURIComponent(courseID)}`);
+        if (!response.ok) {
+            return null;
+        }
+
+        const data = await response.json();
+        if (!data || !Array.isArray(data.raw) || data.raw.length === 0) {
+            return null;
+        }
+
+        const overall = aggregateCritiqueRows(data.raw);
+        if (!overall) {
+            return null;
+        }
+
+        const rowsByInstructor = new Map();
+        for (const row of data.raw) {
+            if (!row.instructor_name) {
+                continue;
+            }
+            const name = normalizeCritiqueInstructorName(row.instructor_name);
+            if (!rowsByInstructor.has(name)) {
+                rowsByInstructor.set(name, []);
+            }
+            rowsByInstructor.get(name).push(row);
+        }
+
+        const byInstructor = {};
+        for (const [name, rows] of rowsByInstructor) {
+            const agg = aggregateCritiqueRows(rows);
+            if (agg) {
+                byInstructor[name] = agg;
+            }
+        }
+
+        // Best/worst-GPA instructor is deliberately NOT computed here: this `byInstructor` map
+        // spans every instructor Course Critique has ever recorded for the course, most of whom
+        // likely aren't even teaching it this term. "Best/worst" needs to be scoped to whichever
+        // instructors are actually showing up in the current search results, which only the
+        // content script (which can see the live page) is in a position to compute.
+        return {
+            ...overall,
+            byInstructor,
+            critiqueLink: `https://critique.gatech.edu/course?courseID=${encodeURIComponent(courseID)}`
+        };
+    } catch (error) {
+        console.error("Error fetching Course Critique data:", error); // TODO: Consider removing/improving error handling
+        return null;
+    }
+}
+
+/**
  * Event listener for establishing connection with the extension's content script.
- * Listens for messages containing professor names, then retrieves their metrics from the RMP API.
+ * Listens for messages containing professor names (RMP lookups) or course IDs (Course
+ * Critique lookups), and responds on the same port with the corresponding data.
  */
 chrome.runtime.onConnect.addListener(function(port) {
     port.onMessage.addListener(async function(msg) {
@@ -240,8 +406,11 @@ chrome.runtime.onConnect.addListener(function(port) {
 
             const profMetrics = await getProfessorMetricsWithLink(profID);
             port.postMessage({professorMetrics: profMetrics});
+        } else if (msg.courseID) {
+            const courseCritiqueData = await getCourseCritiqueData(msg.courseID);
+            port.postMessage({courseCritiqueData});
         } else {
-            console.error("Error checking msg.professorName"); // Log errors
+            console.error("Error checking msg.professorName / msg.courseID"); // Log errors
         }
     });
 });
